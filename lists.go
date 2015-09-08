@@ -13,30 +13,23 @@ func (c *Client) llen(key string) (int, error) {
 	if err != nil {
 		return -1, err
 	}
-	i, err := intfToInteger(val)
+	i, err := ifaceToInteger(val)
 	return i, err
 }
 
 // LPUSH key value [value ...]
 // Prepend one or multiple values to a list
-func (c *Client) lpush(key string, values ...string) (int, error) {
+func (c *Client) lpush(key string, values ...interface{}) (int, error) {
 
-	args := []string{"LPUSH", key}
+	args := append([]interface{}{}, key)
+	args = append(args, values...)
 
-	for _, value := range values {
-		args = append(args, value)
-	}
-
-	sc := BulkString(args...)
-	fmt.Fprintf(c.conn, sc)
-
-	r, err := c.readResp()
-
+	val, err := c.sendRequest("LPUSH", args ...)
 	if err != nil {
-		return 0, err
+		return -1, err
 	}
-
-	return strconv.Atoi(r)
+	i, err := ifaceToInteger(val)
+	return i, err
 }
 
 // BLPOP key [key ...] timeout

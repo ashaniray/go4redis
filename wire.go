@@ -180,7 +180,7 @@ func (c *Client) sendRequest (cmd string, args ...interface{}) (interface{}, err
 	 request := cmd;
 
 	for _, arg := range args {
-		val, err := intfToStringFmt(arg)
+		val, err := ifaceToStringFmt(arg)
 		if err != nil {
 			return nil, err
 		}

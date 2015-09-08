@@ -5,12 +5,12 @@ import (
   "strconv"
 )
 
-func intfToStringFmt (anything interface{}) (string, error) {
+func ifaceToStringFmt (anything interface{}) (string, error) {
   switch anything.(type) {
       case string:
-          return intfToString(anything)
+          return ifaceToString(anything)
       default:
-        val, err := intfToInteger(anything)
+        val, err := ifaceToInteger(anything)
         if err != nil {
           return "", err
         }
@@ -19,8 +19,8 @@ func intfToStringFmt (anything interface{}) (string, error) {
 		}
 }
 
-func intfToInteger (intf interface{}) (int, error) {
-  val, ok := intf.(int)
+func ifaceToInteger (iface interface{}) (int, error) {
+  val, ok := iface.(int)
 	if (ok == false) {
 		return 0, errors.New("Cannot convert response to interger")
 	} else {
@@ -28,8 +28,8 @@ func intfToInteger (intf interface{}) (int, error) {
   }
 }
 
-func intfToString (intf interface{}) (string, error) {
-  val, ok := intf.(string)
+func ifaceToString (iface interface{}) (string, error) {
+  val, ok := iface.(string)
 	if (ok == false) {
 		return EMPTY_STRING, errors.New("Cannot convert response to string")
 	} else {

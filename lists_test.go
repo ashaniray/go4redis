@@ -64,11 +64,11 @@ func TestLPUSH(t *testing.T) {
 	total, err := c.lpush("foo", "1", "2", "3")
 
 	if err != nil {
-		t.Error("expected no error while lpush but got %s", err)
+		t.Errorf("expected no error while lpush but got %s", err)
 	}
 
 	if total != 3 {
-		t.Error("expected lpush to return 3 but got %d", total)
+		t.Errorf("expected lpush to return 3 but got %d", total)
 	}
 }
 
