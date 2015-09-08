@@ -1,8 +1,9 @@
 package go4redis
 
 import (
-	// "testing"
+// "testing"
 )
+
 /*
 func TestSADD(t *testing.T)        { t.Fail() }
 func TestSCARD(t *testing.T)       { t.Fail() }
