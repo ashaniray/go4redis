@@ -11,7 +11,7 @@ import (
 func (c *Client) llen(key string) (int, error) {
 	sc := BulkString("LLEN", key)
 	fmt.Fprintf(c.conn, sc)
-	val, err := c.readResp()
+	val, err := c.readResp2()
 	if err != nil {
 		return -1, err
 	}

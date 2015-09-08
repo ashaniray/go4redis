@@ -147,9 +147,31 @@ func parseResp(r *bufio.Reader) (interface{}, error) {
 	return readType(r)
 }
 
-func (c *Client) readResp() (interface {}, error) {
+func (c *Client) readResp2() (interface {}, error) {
 	r := bufio.NewReader(c.conn)
 	return parseResp(r)
+}
+
+func (c *Client) readResp() (string, error) {
+	r := bufio.NewReader(c.conn)
+	respType, _ := r.ReadByte()
+
+	switch string(respType) {
+	case "+":
+		return ReadLine(r)
+	case ":":
+		return ReadLine(r)
+	case "$":
+		_, err := ReadLine(r)
+		if err != nil {
+			return "", err
+		}
+		return ReadLine(r)
+	default:
+		return "", errors.New("Protocol error")
+
+	}
+
 }
 
 func BulkString(args ...string) string {
