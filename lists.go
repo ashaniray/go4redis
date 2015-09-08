@@ -9,13 +9,11 @@ import (
 // LLEN key
 // Get the length of a list
 func (c *Client) llen(key string) (int, error) {
-	sc := BulkString("LLEN", key)
-	fmt.Fprintf(c.conn, sc)
-	val, err := c.readResp2()
+	val, err := c.sendRequest("LLEN", key)
 	if err != nil {
 		return -1, err
 	}
-	i, err := toInteger(val)
+	i, err := intfToInteger(val)
 	return i, err
 }
 

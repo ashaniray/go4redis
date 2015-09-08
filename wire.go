@@ -174,6 +174,25 @@ func (c *Client) readResp() (string, error) {
 
 }
 
+
+
+func (c *Client) sendRequest (cmd string, args ...interface{}) (interface{}, error) {
+	 request := cmd;
+
+	for _, arg := range args {
+		val, err := intfToStringFmt(arg)
+		if err != nil {
+			return nil, err
+		}
+		request = request + " " + val
+
+	}
+	request = request + NEWLINE
+	fmt.Fprintf(c.conn, request)
+	return c.readResp2()
+
+}
+
 func BulkString(args ...string) string {
 	result := fmt.Sprintf("*%d\r\n", len(args))
 	for _, arg := range args {
