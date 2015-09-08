@@ -3,6 +3,7 @@ package go4redis
 import (
 	"fmt"
 	"strconv"
+
 )
 
 // LLEN key
@@ -10,14 +11,12 @@ import (
 func (c *Client) llen(key string) (int, error) {
 	sc := BulkString("LLEN", key)
 	fmt.Fprintf(c.conn, sc)
-
-	r, err := c.readResp()
-
+	val, err := c.readResp()
 	if err != nil {
-		return 0, err
+		return -1, err
 	}
-
-	return strconv.Atoi(r)
+	i, err := toInteger(val)
+	return i, err
 }
 
 // LPUSH key value [value ...]

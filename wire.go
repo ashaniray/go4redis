@@ -142,30 +142,14 @@ func readType(r *bufio.Reader) (interface{}, error) {
 		return EMPTY_STRING, errors.New("Invalid first token in response")
 	}
 }
+
 func parseResp(r *bufio.Reader) (interface{}, error) {
 	return readType(r)
 }
 
-func (c *Client) readResp() (string, error) {
+func (c *Client) readResp() (interface {}, error) {
 	r := bufio.NewReader(c.conn)
-	respType, _ := r.ReadByte()
-
-	switch string(respType) {
-	case "+":
-		return ReadLine(r)
-	case ":":
-		return ReadLine(r)
-	case "$":
-		_, err := ReadLine(r)
-		if err != nil {
-			return "", err
-		}
-		return ReadLine(r)
-	default:
-		return "", errors.New("Protocol error")
-
-	}
-
+	return parseResp(r)
 }
 
 func BulkString(args ...string) string {
