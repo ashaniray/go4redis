@@ -1,8 +1,9 @@
 package go4redis
 
 import (
-	// "testing"
+// "testing"
 )
+
 /*
 func TestDEL(t *testing.T)       { t.Fail() }
 func TestDUMP(t *testing.T)      { t.Fail() }
