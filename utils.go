@@ -3,15 +3,16 @@ package go4redis
 import (
 	"errors"
 	"strconv"
+  "container/list"
 )
 
-func stringArrayToInterfaceArray(args []string) ([]interface{}) {
-  ifaceArray := make([]interface{}, len(args))
-  for i, v := range args {
-      ifaceArray[i] = v
-  }
-  return ifaceArray
-}
+// func stringArrayToInterfaceArray(args []string) ([]interface{}) {
+//   ifaceArray := make([]interface{}, len(args))
+//   for i, v := range args {
+//       ifaceArray[i] = v
+//   }
+//   return ifaceArray
+// }
 
 
 func ifaceToStringFmt(anything interface{}) (string, error) {
@@ -45,6 +46,24 @@ func ifaceToString(iface interface{}) (string, error) {
 		return val, nil
 	}
 }
+
+func ifaceToStrings(iface interface{}) ([]string, error) {
+  l, ok := iface.(list.List)
+	if ok == false {
+		return []string{}, errors.New("Cannot convert response to array of string")
+	}
+  var args []string
+  for e := l.Front(); e != nil; e = e.Next() {
+		iface = e.Value
+    str, err := ifaceToString(iface)
+    if err != nil {
+      return nil, err
+    }
+    args = append(args, str)
+  }
+  return args, nil
+}
+
 
 func stringsToIfaces(xs []string) []interface{} {
 	var args []interface{}

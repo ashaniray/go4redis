@@ -68,7 +68,7 @@ func (c *Client) GET(key string)(string, error) {
 
 func (c *Client) BITOP(operation string, destkey string, keys []string)(int, error) {
   args := append([]string{destkey}, keys...)
-  val, err := c.sendRequest("BITOP", stringArrayToInterfaceArray(args))
+  val, err := c.sendRequest("BITOP", stringsToIfaces(args))
 	if err != nil {
 		return -1, err
 	}
@@ -155,19 +155,18 @@ func (c *Client) IncrByFloat(key string, increment float64)(int, error) {
 	i, err := ifaceToInteger(val)
 	return i, err
 }
-/*
+
 func (c *Client) Mget(keys []string)([]string, error) {
 
-  val, err := c.sendRequest("MGET", stringArrayToInterfaceArray(keys))
+  val, err := c.sendRequest("MGET", stringsToIfaces(keys))
 	if err != nil {
-		return [], err
+		return nil, err
 	}
-	arr, err := ifaceToA(val)
+	arr, err := ifaceToStrings(val)
 	return arr, err
 }
 
-
-
+/*
 func (c *Client) MSET(key, value)(int, error) {
   val, err := c.sendRequest("MSET", key, value)
 	if err != nil {
