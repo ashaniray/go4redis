@@ -1,46 +1,51 @@
 package go4redis
 
-// DEL key [key ...]
-// Delete a key
-// DUMP key
-// Return a serialized version of the value stored at the specified key.
-// EXISTS key [key ...]
-// Determine if a key exists
-// EXPIRE key seconds
-// Set a key's time to live in seconds
-// EXPIREAT key timestamp
-// Set the expiration for a key as a UNIX timestamp
-// KEYS pattern
-// Find all keys matching the given pattern
-// MIGRATE host port key destination-db timeout [COPY] [REPLACE]
-// Atomically transfer a key from a Redis instance to another one.
-// MOVE key db
-// Move a key to another database
-// OBJECT subcommand [arguments [arguments ...]]
-// Inspect the internals of Redis objects
-// PERSIST key
-// Remove the expiration from a key
-// PEXPIRE key milliseconds
-// Set a key's time to live in milliseconds
-// PEXPIREAT key milliseconds-timestamp
-// Set the expiration for a key as a UNIX timestamp specified in milliseconds
-// PTTL key
-// Get the time to live for a key in milliseconds
-// RANDOMKEY
-// Return a random key from the keyspace
-// RENAME key newkey
-// Rename a key
-// RENAMENX key newkey
-// Rename a key, only if the new key does not exist
-// RESTORE key ttl serialized-value [REPLACE]
-// Create a key using the provided serialized value, previously obtained using DUMP.
-// SORT key [BY pattern] [LIMIT offset count] [GET pattern [GET pattern ...]] [ASC|DESC] [ALPHA] [STORE destination]
-// Sort the elements in a list, set or sorted set
-// TTL key
-// Get the time to live for a key
-// TYPE key
-// Determine the type stored at key
-// WAIT numslaves timeout
-// Wait for the synchronous replication of all the write commands sent in the context of the current connection
-// SCAN cursor [MATCH pattern] [COUNT count]
-// Incrementally iterate the keys space
+func (c *Client) Del(keys ...string) (int, error) {
+
+	args := stringsToIfaces(keys)
+
+	val, err := c.sendRequest("DEL", args...)
+	if err != nil {
+		return -1, err
+	}
+	i, err := ifaceToInteger(val)
+	return i, err
+}
+
+// Returns if key exists
+// The number of keys existing among the ones specified as arguments.
+// Keys mentioned multiple times and existing are counted multiple times.
+func (c *Client) Exists(keys ...string) (int, error) {
+  args := stringsToIfaces(keys)
+  val, err := c.sendRequest("DEL", args...)
+
+  if err != nil {
+    return -1, err
+  }
+  i, err := ifaceToInteger(val)
+  return i, err
+}
+
+/*
+func (c *Client) Dump(key string) (string, error) { }
+
+func (c *Client) Expire( key seconds) (int, error) { }
+func (c *Client) Expireat( key timestamp) (int, error) { }
+func (c *Client) Keys( pattern) (int, error) { }
+func (c *Client) Migrate( host port key destination-db timeout [COPY] [REPLACE]) (int, error) { }
+func (c *Client) Move( key db) (int, error) { }
+func (c *Client) Object( subcommand [arguments [arguments ...]]) (int, error) { }
+func (c *Client) Persist( key) (int, error) { }
+func (c *Client) Pexpire( key milliseconds) (int, error) { }
+func (c *Client) Pexpireat( key milliseconds-timestamp) (int, error) { }
+func (c *Client) Pttl( key) (int, error) { }
+func (c *Client) Randomkey( ) (int, error) { }
+func (c *Client) Rename( key newkey) (int, error) { }
+func (c *Client) Renamenx( key newkey) (int, error) { }
+func (c *Client) Restore( key ttl serialized-value [REPLACE]) (int, error) { }
+func (c *Client) Sort( key [BY pattern] [LIMIT offset count] [GET pattern [GET pattern ...]] [ASC|DESC] [ALPHA] [STORE destination]) (int, error) { }
+func (c *Client) Ttl( key) (int, error) { }
+func (c *Client) Type( key) (int, error) { }
+func (c *Client) Wait( numslaves timeout) (int, error) { }
+func (c *Client) Scan( cursor [MATCH pattern] [COUNT count]) (int, error) { }
+*/

@@ -147,7 +147,7 @@ func parseResp(r *bufio.Reader) (interface{}, error) {
 	return readType(r)
 }
 
-func (c *Client) readResp2() (interface {}, error) {
+func (c *Client) readResp2() (interface{}, error) {
 	r := bufio.NewReader(c.conn)
 	return parseResp(r)
 }
@@ -174,10 +174,8 @@ func (c *Client) readResp() (string, error) {
 
 }
 
-
-
-func (c *Client) sendRequest (cmd string, args ...interface{}) (interface{}, error) {
-	 request := cmd;
+func (c *Client) sendRequest(cmd string, args ...interface{}) (interface{}, error) {
+	request := cmd
 
 	for _, arg := range args {
 		val, err := ifaceToStringFmt(arg)

@@ -3,7 +3,6 @@ package go4redis
 import (
 	"fmt"
 	"strconv"
-
 )
 
 // LLEN key
@@ -24,7 +23,7 @@ func (c *Client) lpush(key string, values ...interface{}) (int, error) {
 	args := append([]interface{}{}, key)
 	args = append(args, values...)
 
-	val, err := c.sendRequest("LPUSH", args ...)
+	val, err := c.sendRequest("LPUSH", args...)
 	if err != nil {
 		return -1, err
 	}
