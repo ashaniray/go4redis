@@ -222,18 +222,7 @@ func (c *Client) SetRange(key string, offset int, value string)(int, error) {
 	return i, err
 }
 
-
-/*
-
-func (c *Client) SETEX(key, seconds, value)(int, error) {
-  val, err := c.sendRequest("SETEX", key, seconds, value)
-	if err != nil {
-		return -1, err
-	}
-	i, err := ifaceToInteger(val)
-	return i, err
-}
-func (c *Client) SETNX(key, value)(int, error) {
+func (c *Client) SetNX(key string, value string)(int, error) {
   val, err := c.sendRequest("SETNX", key, value)
 	if err != nil {
 		return -1, err
@@ -242,6 +231,11 @@ func (c *Client) SETNX(key, value)(int, error) {
 	return i, err
 }
 
-
-
-*/
+func (c *Client) SETEX(key string, seconds int, value string)(string, error) {
+  val, err := c.sendRequest("SETEX", key, seconds, value)
+	if err != nil {
+		return EMPTY_STRING, err
+	}
+	str, err := ifaceToString(val)
+	return str, err
+}
