@@ -6,14 +6,6 @@ import (
   "container/list"
 )
 
-// func stringArrayToInterfaceArray(args []string) ([]interface{}) {
-//   ifaceArray := make([]interface{}, len(args))
-//   for i, v := range args {
-//       ifaceArray[i] = v
-//   }
-//   return ifaceArray
-// }
-
 
 func ifaceToStringFmt(anything interface{}) (string, error) {
 	switch anything.(type) {
@@ -48,7 +40,7 @@ func ifaceToString(iface interface{}) (string, error) {
 }
 
 func ifaceToStrings(iface interface{}) ([]string, error) {
-  l, ok := iface.(list.List)
+  l, ok := iface.(*list.List)
 	if ok == false {
 		return []string{}, errors.New("Cannot convert response to array of string")
 	}
