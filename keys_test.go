@@ -54,12 +54,38 @@ func TestEXISTS(t *testing.T) {
 
 }
 
+func TestKEYS(t *testing.T)      {
+	c, err := DialAndFlush()
+
+	if err != nil {
+		t.Errorf("Expected no error while dialing and flushing but got %s", err)
+	}
+
+	_, err = c.lpush("foo", "1")
+
+  if err != nil {
+    t.Errorf("expected no error while lpush command, but got %s", err)
+  }
+
+	keys, err := c.Keys("*")
+
+	if err != nil {
+		t.Errorf("expected no error while keys command, but got %s", err)
+	}
+
+	nKeys := len(keys)
+
+	if nKeys != 1 {
+		t.Errorf("expected keys to return 1 keys but got %d", nKeys)
+	}
+}
+
 /*
 func TestDUMP(t *testing.T)      { t.Fail() }
 
 func TestEXPIRE(t *testing.T)    { t.Fail() }
 func TestEXPIREAT(t *testing.T)  { t.Fail() }
-func TestKEYS(t *testing.T)      { t.Fail() }
+
 func TestMIGRATE(t *testing.T)   { t.Fail() }
 func TestMOVE(t *testing.T)      { t.Fail() }
 func TestOBJECT(t *testing.T)    { t.Fail() }

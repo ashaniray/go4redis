@@ -26,12 +26,24 @@ func (c *Client) Exists(keys ...string) (int, error) {
   return i, err
 }
 
+func (c *Client) Keys(pattern string) ([]string, error) {
+	val, err := c.sendRequest("KEYS", pattern)
+
+	if err != nil {
+		return nil, err
+	}
+
+	arr, err := ifaceToStrings(val)
+
+	return arr, err
+}
+
 /*
 func (c *Client) Dump(key string) (string, error) { }
 
 func (c *Client) Expire( key seconds) (int, error) { }
 func (c *Client) Expireat( key timestamp) (int, error) { }
-func (c *Client) Keys( pattern) (int, error) { }
+
 func (c *Client) Migrate( host port key destination-db timeout [COPY] [REPLACE]) (int, error) { }
 func (c *Client) Move( key db) (int, error) { }
 func (c *Client) Object( subcommand [arguments [arguments ...]]) (int, error) { }
