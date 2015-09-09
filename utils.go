@@ -46,8 +46,7 @@ func ifaceToStrings(iface interface{}) ([]string, error) {
 	}
   var args []string
   for e := l.Front(); e != nil; e = e.Next() {
-		iface = e.Value
-    str, err := ifaceToString(iface)
+    str, err := ifaceToString(e.Value)
     if err != nil {
       return nil, err
     }
