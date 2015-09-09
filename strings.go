@@ -166,56 +166,45 @@ func (c *Client) Mget(keys []string)([]string, error) {
 	return arr, err
 }
 
-/*
-func (c *Client) MSET(key, value)(int, error) {
-  val, err := c.sendRequest("MSET", key, value)
+func (c *Client) Mset(key_values map[string] string)(bool, error) {
+  args := mapToIfaces(key_values)
+  _, err := c.sendRequest("MSET", args)
 	if err != nil {
-		return -1, err
+		return false, err
 	}
-	i, err := ifaceToInteger(val)
+
+	return true, nil
+}
+
+func (c *Client) MsetNX(key_values map[string] string)(int, error) {
+  args := mapToIfaces(key_values)
+  _, err := c.sendRequest("MSETNX", args)
+	if err != nil {
+		return 0, err
+	}
+  i, err := ifaceToInteger(args)
 	return i, err
 }
-func (c *Client) MSET(key, value key value ...)(int, error) {
-  val, err := c.sendRequest("MSET", key, value key value ...)
-	if err != nil {
-		return -1, err
-	}
-	i, err := ifaceToInteger(val)
-	return i, err
-}
-func (c *Client) MSETNX(key, value)(int, error) {
-  val, err := c.sendRequest("MSETNX", key, value)
-	if err != nil {
-		return -1, err
-	}
-	i, err := ifaceToInteger(val)
-	return i, err
-}
-func (c *Client) MSETNX(key, value key value ...)(int, error) {
-  val, err := c.sendRequest("MSETNX", key, value key value ...)
-	if err != nil {
-		return -1, err
-	}
-	i, err := ifaceToInteger(val)
-	return i, err
-}
-func (c *Client) PSETEX(key, milliseconds, value)(int, error) {
+
+func (c *Client) Psetx(key string, milliseconds uint, value string)(string, error) {
   val, err := c.sendRequest("PSETEX", key, milliseconds, value)
 	if err != nil {
-		return -1, err
+		return EMPTY_STRING, err
 	}
-	i, err := ifaceToInteger(val)
-	return i, err
+	str, err := ifaceToString(val)
+	return str, err
 }
-func (c *Client) SET(key value)(int, error) {
-  val, err := c.sendRequest("SET", key value)
+
+func (c *Client) Set(key string, value string)(string, error) {
+  val, err := c.sendRequest("SET", key, value)
 	if err != nil {
-		return -1, err
+		return EMPTY_STRING, err
 	}
-	i, err := ifaceToInteger(val)
-	return i, err
+	str, err := ifaceToString(val)
+	return str, err
 }
-func (c *Client) SETBIT(key, offset, value)(int, error) {
+
+func (c *Client) Setbit(key string, offset int, value int)(int, error) {
   val, err := c.sendRequest("SETBIT", key, offset, value)
 	if err != nil {
 		return -1, err
@@ -223,6 +212,12 @@ func (c *Client) SETBIT(key, offset, value)(int, error) {
 	i, err := ifaceToInteger(val)
 	return i, err
 }
+
+/*
+
+
+
+
 func (c *Client) SETEX(key, seconds, value)(int, error) {
   val, err := c.sendRequest("SETEX", key, seconds, value)
 	if err != nil {

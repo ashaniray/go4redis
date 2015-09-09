@@ -64,6 +64,13 @@ func ifaceToStrings(iface interface{}) ([]string, error) {
   return args, nil
 }
 
+func mapToIfaces(key_values map[string] string) []interface{} {
+  args := []interface{}{}
+  for key := range key_values {
+    args = append(args, key, key_values[key])
+  }
+  return args
+}
 
 func stringsToIfaces(xs []string) []interface{} {
 	var args []interface{}
