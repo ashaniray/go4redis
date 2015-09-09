@@ -5,6 +5,14 @@ import (
   "strconv"
 )
 
+func stringArrayToInterfaceArray(args []string) ([]interface{}) {
+  ifaceArray := make([]interface{}, len(args))
+  for i, v := range args {
+      ifaceArray[i] = v
+  }
+  return ifaceArray
+}
+
 func ifaceToStringFmt (anything interface{}) (string, error) {
   switch anything.(type) {
       case string:

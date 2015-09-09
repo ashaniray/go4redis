@@ -65,9 +65,10 @@ func (c *Client) GET(key string)(string, error) {
 	return i, err
 }
 
-/*
-func (c *Client) BITOP(operation, destkey, key key ...)(int, error) {
-  val, err := c.sendRequest("BITOP", destkey, key key ...)
+
+func (c *Client) BITOP(operation string, destkey string, keys []string)(int, error) {
+  args := append([]string{destkey}, keys...)
+  val, err := c.sendRequest("BITOP", stringArrayToInterfaceArray(args))
 	if err != nil {
 		return -1, err
 	}
@@ -75,7 +76,7 @@ func (c *Client) BITOP(operation, destkey, key key ...)(int, error) {
 	return i, err
 }
 
-func (c *Client) BITPOS(key, bit)(int, error) {
+func (c *Client) BitPos(key string, bit uint8)(int, error) {
   val, err := c.sendRequest("BITPOS", key, bit)
 	if err != nil {
 		return -1, err
@@ -84,7 +85,7 @@ func (c *Client) BITPOS(key, bit)(int, error) {
 	return i, err
 }
 
-func (c *Client) BITPOS(key, bit, start)(int, error) {
+func (c *Client) BitPosWithStartRange(key string, bit uint8, start int)(int, error) {
   val, err := c.sendRequest("BITPOS", bit, start)
 	if err != nil {
 		return -1, err
@@ -92,7 +93,7 @@ func (c *Client) BITPOS(key, bit, start)(int, error) {
 	i, err := ifaceToInteger(val)
 	return i, err
 }
-func (c *Client) BITPOS(key, bit, start, end)(int, error) {
+func (c *Client) BitPosWithRange(key string, bit uint8, start int, end int)(int, error) {
   val, err := c.sendRequest("BITPOS", bit, start, end)
 	if err != nil {
 		return -1, err
@@ -101,8 +102,7 @@ func (c *Client) BITPOS(key, bit, start, end)(int, error) {
 	return i, err
 }
 
-
-func (c *Client) GETBIT(key, offset)(int, error) {
+func (c *Client) GetBit(key string, offset int)(int, error) {
   val, err := c.sendRequest("GETBIT", key, offset)
 	if err != nil {
 		return -1, err
@@ -110,7 +110,7 @@ func (c *Client) GETBIT(key, offset)(int, error) {
 	i, err := ifaceToInteger(val)
 	return i, err
 }
-func (c *Client) GETRANGE(key, start, end)(int, error) {
+func (c *Client) GetRange(key string, start int, end int)(int, error) {
   val, err := c.sendRequest("GETRANGE", key, start, end)
 	if err != nil {
 		return -1, err
@@ -118,7 +118,8 @@ func (c *Client) GETRANGE(key, start, end)(int, error) {
 	i, err := ifaceToInteger(val)
 	return i, err
 }
-func (c *Client) GETSET(key, value)(int, error) {
+
+func (c *Client) GetSet(key string, value string)(int, error) {
   val, err := c.sendRequest("GETSET", key, value)
 	if err != nil {
 		return -1, err
@@ -126,7 +127,8 @@ func (c *Client) GETSET(key, value)(int, error) {
 	i, err := ifaceToInteger(val)
 	return i, err
 }
-func (c *Client) INCR(key)(int, error) {
+
+func (c *Client) Incr(key string)(int, error) {
   val, err := c.sendRequest("INCR", key)
 	if err != nil {
 		return -1, err
@@ -134,7 +136,9 @@ func (c *Client) INCR(key)(int, error) {
 	i, err := ifaceToInteger(val)
 	return i, err
 }
-func (c *Client) INCRBY(key, increment)(int, error) {
+
+
+func (c *Client) IncrBy(key string, increment int)(int, error) {
   val, err := c.sendRequest("INCRBY", key, increment)
 	if err != nil {
 		return -1, err
@@ -142,7 +146,8 @@ func (c *Client) INCRBY(key, increment)(int, error) {
 	i, err := ifaceToInteger(val)
 	return i, err
 }
-func (c *Client) INCRBYFLOAT(key, increment)(int, error) {
+
+func (c *Client) IncrByFloat(key string, increment float64)(int, error) {
   val, err := c.sendRequest("INCRBYFLOAT", key, increment)
 	if err != nil {
 		return -1, err
@@ -150,22 +155,19 @@ func (c *Client) INCRBYFLOAT(key, increment)(int, error) {
 	i, err := ifaceToInteger(val)
 	return i, err
 }
-func (c *Client) MGET(key)(int, error) {
-  val, err := c.sendRequest("MGET", key)
+/*
+func (c *Client) Mget(keys []string)([]string, error) {
+
+  val, err := c.sendRequest("MGET", stringArrayToInterfaceArray(keys))
 	if err != nil {
-		return -1, err
+		return [], err
 	}
-	i, err := ifaceToInteger(val)
-	return i, err
+	arr, err := ifaceToA(val)
+	return arr, err
 }
-func (c *Client) MGET(key, key ...)(int, error) {
-  val, err := c.sendRequest("MGET", key, key ...)
-	if err != nil {
-		return -1, err
-	}
-	i, err := ifaceToInteger(val)
-	return i, err
-}
+
+
+
 func (c *Client) MSET(key, value)(int, error) {
   val, err := c.sendRequest("MSET", key, value)
 	if err != nil {
