@@ -63,6 +63,14 @@ func mapToIfaces(key_values map[string] string) []interface{} {
   return args
 }
 
+func stringify(str string) string {
+	if str[0] == '"' {
+		return str
+	} else {
+		return "\"" + str + "\""
+	}
+}
+
 func stringsToIfaces(xs []string) []interface{} {
 	var args []interface{}
 
