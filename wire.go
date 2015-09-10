@@ -12,6 +12,10 @@ import (
 
 type Client struct {
 	conn net.Conn
+	chnl chan int
+	subActive bool
+	reqSuspendToSub bool
+	reqQuitToSub bool
 }
 
 type SimpleString struct {
@@ -33,6 +37,7 @@ func Dial(addr string) (*Client, error) {
 
 	return &Client{conn: conn}, nil
 }
+
 
 func ReadLine(r *bufio.Reader) (string, error) {
 	line, err := r.ReadString('\n')
@@ -174,7 +179,16 @@ func (c *Client) readResp() (string, error) {
 
 }
 
+func sendRequestDone(c *Client) {
+	c.chnl <- START
+}
+
 func (c *Client) sendRequest(cmd string, args ...interface{}) (interface{}, error) {
+	if c.subActive {
+		c.chnl<-REQUEST_ACCESS
+		<-c.chnl
+		defer sendRequestDone(c)
+	}
 	request := cmd
 
 	for _, arg := range args {
