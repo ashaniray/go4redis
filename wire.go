@@ -164,6 +164,8 @@ func (c *Client) readResp() (string, error) {
 	switch string(respType) {
 	case "+":
 		return ReadLine(r)
+	case "-":
+		return ReadLine(r)
 	case ":":
 		return ReadLine(r)
 	case "$":
@@ -176,7 +178,6 @@ func (c *Client) readResp() (string, error) {
 		return "", errors.New("Protocol error")
 
 	}
-
 }
 
 func sendRequestDone(c *Client) {

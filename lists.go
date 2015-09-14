@@ -19,14 +19,15 @@ func (c *Client) llen(key string) (int, error) {
 // LPUSH key value [value ...]
 // Prepend one or multiple values to a list
 func (c *Client) lpush(key string, values ...interface{}) (int, error) {
-
 	args := append([]interface{}{}, key)
 	args = append(args, values...)
 
 	val, err := c.sendRequest("LPUSH", args...)
 	if err != nil {
+		fmt.Println("Printing error")
 		return -1, err
 	}
+
 	i, err := ifaceToInteger(val)
 	return i, err
 }
@@ -88,11 +89,13 @@ func (c *Client) lpop(key string) (string, error) {
 // Set the value of an element in a list by its index
 
 func (c *Client) lset(key string, idx int, value string) error {
-	sc := BulkString("LSET", key, strconv.Itoa(idx), value)
-	fmt.Fprintf(c.conn, sc)
-
-	_, err := c.readResp()
-
+	val, err := c.sendRequest("LSET", key, idx, value)
+	if err != nil {
+		return err
+	}
+	if err == nil {
+		err = getErrorFromResp(val)
+	}
 	return err
 }
 

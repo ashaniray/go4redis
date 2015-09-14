@@ -4,6 +4,7 @@ import (
 	"errors"
 	"strconv"
   "container/list"
+	"strings"
 )
 
 
@@ -24,19 +25,42 @@ func ifaceToStringFmt(anything interface{}) (string, error) {
 func ifaceToInteger(iface interface{}) (int, error) {
 	val, ok := iface.(int)
 	if ok == false {
-		return 0, errors.New("Cannot convert response to interger")
+		valString, okString := iface.(string)
+		if okString == false {
+			return 0, errors.New("Cannot convert response to interger")
+		} else {
+			return 0, errors.New(valString)
+		}
 	} else {
 		return val, nil
 	}
 }
 
 func ifaceToString(iface interface{}) (string, error) {
-	val, ok := iface.(string)
-	if ok == false {
-		return EMPTY_STRING, errors.New("Cannot convert response to string")
-	} else {
+	switch iface.(type) {
+	case SimpleString:
+		val, ok := iface.(SimpleString)
+
+		if ok == false {
+			return EMPTY_STRING, errors.New("Cannot convert from type simple string")
+		} else {
+			if (val.success == false) {
+				return EMPTY_STRING, errors.New(val.value)
+			} else {
+				return val.value, nil
+			}
+		}
+	case string:
+		val, ok := iface.(string)
+		if ok == false {
+			return EMPTY_STRING, errors.New("Cannot convert type to string")
+		}
 		return val, nil
+	default:
+		return EMPTY_STRING, errors.New("Attempt to convert unknown type to string")
 	}
+
+
 }
 
 func ifaceToStrings(iface interface{}) ([]string, error) {
@@ -68,6 +92,61 @@ func stringify(str string) string {
 		return str
 	} else {
 		return "\"" + str + "\""
+	}
+}
+
+func parsePubSubResp(resp interface{}) (string, string, int, string, error) {
+	l, ok := resp.(*list.List)
+	if ok == false {
+		return EMPTY_STRING, EMPTY_STRING, 0, EMPTY_STRING, errors.New("Cannot convert SUBSCRIBE response to array")
+	}
+  first := l.Front()
+	l.Remove(first)
+
+	second := l.Front()
+	l.Remove(second)
+
+	third := l.Front()
+	l.Remove(third)
+
+	command, ok := first.Value.(string)
+	if ok == false {
+		return EMPTY_STRING, EMPTY_STRING, 0, EMPTY_STRING, errors.New("Cannot convert response of PUB/SUB to command string")
+	}
+
+	channel, ok := second.Value.(string)
+	if ok == false {
+		return EMPTY_STRING, EMPTY_STRING, 0, EMPTY_STRING, errors.New("Cannot convert response of PUB/SUB to channel name")
+	}
+
+	switch strings.ToUpper (command) {
+	case "SUBSCRIBE", "UNSUBSCRIBE":
+		channelCount, ok := third.Value.(int)
+		if ok == false {
+			return EMPTY_STRING, EMPTY_STRING, 0, EMPTY_STRING, errors.New("Cannot convert response of PUB/SUB to channel count")
+		}
+		return command, channel, channelCount, EMPTY_STRING, nil
+	case "MESSAGE":
+		message, ok := third.Value.(string)
+		if ok == false {
+			return EMPTY_STRING, EMPTY_STRING, 0, EMPTY_STRING, errors.New("Cannot convert response of PUB/SUB to channel count")
+		}
+		return command, channel, 0, message, nil
+	default:
+			return EMPTY_STRING, EMPTY_STRING, 0, EMPTY_STRING, errors.New("Unknown Response Type")
+	}
+}
+
+func getErrorFromResp(resp interface{}) (error) {
+	val, ok := resp.(SimpleString)
+	if ok == false {
+		return errors.New("Error converting response to string")
+	} else {
+		if (val.success == false) {
+			return errors.New(val.value)
+		} else {
+			return nil
+		}
 	}
 }
 

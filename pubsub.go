@@ -23,7 +23,7 @@ func cleanUpSubscribe(c *Client) {
   close(c.chnl)
 }
 
-func handleSubscribe(c *Client, f func (message string)()) {
+func handleSubscribe(c *Client, f func (message string, err error)()) {
   defer close(c.chnl)
   c.subActive = true
   c.chnl <- READY_TO_START
@@ -32,9 +32,10 @@ func handleSubscribe(c *Client, f func (message string)()) {
   for ;c.reqQuitToSub != true; {
     c.conn.SetReadDeadline(time.Now().Add(time.Second))
     //Read till timeout
-    str, err := ReadLine(r)
+    val, err := readType(r)
     if err != nil {
-      go f(str)
+      _, _, _, msg, err := parsePubSubResp(val)
+      go f(msg, err)
     }
     if (c.reqSuspendToSub == true) {
       c.reqSuspendToSub = false
@@ -44,8 +45,9 @@ func handleSubscribe(c *Client, f func (message string)()) {
   }
 }
 
-func (c *Client) Subscribe(f func (message string)(), channels ...string)(int, error) {
-  val, err := c.sendRequest("SUBSCRIBE", stringsToIfaces(channels))
+
+func (c *Client) subscribeSingleChannel(f func (message string, err error)(), channel string)(int, error) {
+  val, err := c.sendRequest("SUBSCRIBE", channel)
 	if err != nil {
 		return -1, err
 	}
@@ -55,9 +57,19 @@ func (c *Client) Subscribe(f func (message string)(), channels ...string)(int, e
     <-c.chnl
     c.chnl <- START
   }
-  i, err := ifaceToInteger(val)
+  _, _, i, _, err := parsePubSubResp(val)
 	return i, err
 }
+
+func (c *Client) Subscribe(f func (message string, err error)(), channels ...string) (int, error){
+  var val int;
+  var err error;
+  for _, channel := range channels {
+    val, err = c.subscribeSingleChannel(f, channel)
+  }
+  return val, err
+}
+
 
 func (c *Client) UnSubscribe(channels ...string)(int, error) {
   val, err := c.sendRequest("UNSUBSCRIBE", stringsToIfaces(channels))
