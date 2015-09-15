@@ -12,6 +12,7 @@ import (
 
 type Client struct {
 	conn net.Conn
+	reader *bufio.Reader
 	chnl chan int
 	subActive bool
 	reqSuspendToSub bool
@@ -36,7 +37,8 @@ func Dial(addr string) (*Client, error) {
 		return nil, err
 	}
 
-	return &Client{conn: conn}, nil
+	reader := bufio.NewReader(conn)
+	return &Client{conn: conn, reader: reader}, nil
 }
 
 
@@ -136,7 +138,7 @@ func readType(r *bufio.Reader) (interface{}, error) {
 		return EMPTY_STRING, err
 	}
 	switch c[0] {
-	case '+':
+	case '+', '-':
 		return readSimpleString(r)
 	case ':':
 		return readNumber(r)
@@ -154,15 +156,13 @@ func parseResp(r *bufio.Reader) (interface{}, error) {
 }
 
 func (c *Client) readResp2() (interface{}, error) {
-	r := bufio.NewReader(c.conn)
-	return parseResp(r)
+	return parseResp(c.reader)
 }
 
 func (c *Client) readResp() (string, error) {
-	r := bufio.NewReader(c.conn)
+	r := c.reader
 	respType, _ := r.ReadByte()
-
-	switch string(respType) {
+ 	switch string(respType) {
 	case "+":
 		return ReadLine(r)
 	case "-":
@@ -215,6 +215,7 @@ func (c *Client) sendRequestN(consolidatedRequest string, n int) ([]interface{},
 			resp = append(resp, val)
 		}
 	}
+
 	return resp, nil
 }
 

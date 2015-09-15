@@ -47,7 +47,7 @@ func handleSubscribe(c *Client, f func (message string, err error)()) {
 
 func (c *Client) Subscribe(f func (message string, err error)(), channels ...string) (int, error){
   n := len(channels)
-  consolidatedRequest, err := createRequest("SUBSCRIBE", stringsToIfaces(channels))
+  consolidatedRequest, err := createRequest("SUBSCRIBE", stringsToIfaces(channels)...)
   if err != nil {
     return 0, err
   }
@@ -55,7 +55,7 @@ func (c *Client) Subscribe(f func (message string, err error)(), channels ...str
 	if err != nil {
 		return -1, err
 	}
-	if (c.subActive == false) {
+  if (c.subActive == false) {
     c.chnl = make(chan int)
     go handleSubscribe(c, f);
     <-c.chnl
@@ -73,7 +73,7 @@ func (c *Client) UnSubscribe(channels ...string)(int, error) {
   if n == 0 {
     n = c.subCount
   }
-  consolidatedRequest, err := createRequest("UNSUBSCRIBE", stringsToIfaces(channels))
+  consolidatedRequest, err := createRequest("UNSUBSCRIBE", stringsToIfaces(channels)...)
   if err != nil {
     return 0, err
   }
@@ -94,8 +94,6 @@ func (c *Client) UnSubscribe(channels ...string)(int, error) {
   }
 	return i, err
 }
-
-
 
 func (c *Client) Publish(channel string, message string)(int, error) {
   val, err := c.sendRequest("PUBLISH", channel, stringify(message))

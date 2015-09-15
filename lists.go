@@ -24,7 +24,6 @@ func (c *Client) lpush(key string, values ...interface{}) (int, error) {
 
 	val, err := c.sendRequest("LPUSH", args...)
 	if err != nil {
-		fmt.Println("Printing error")
 		return -1, err
 	}
 

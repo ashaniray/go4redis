@@ -5,6 +5,7 @@ import (
 	"strconv"
   "container/list"
 	"strings"
+
 )
 
 
@@ -27,7 +28,8 @@ func ifaceToInteger(iface interface{}) (int, error) {
 	if ok == false {
 		valString, okString := iface.(string)
 		if okString == false {
-			return 0, errors.New("Cannot convert response to interger")
+
+			return 0, errors.New("Cannot convert to integer")
 		} else {
 			return 0, errors.New(valString)
 		}
@@ -100,14 +102,10 @@ func parsePubSubResp(resp interface{}) (string, string, int, string, error) {
 	if ok == false {
 		return EMPTY_STRING, EMPTY_STRING, 0, EMPTY_STRING, errors.New("Cannot convert SUBSCRIBE response to array")
 	}
+
   first := l.Front()
-	l.Remove(first)
-
-	second := l.Front()
-	l.Remove(second)
-
-	third := l.Front()
-	l.Remove(third)
+	second := first.Next()
+	third := second.Next()
 
 	command, ok := first.Value.(string)
 	if ok == false {
@@ -152,7 +150,6 @@ func getErrorFromResp(resp interface{}) (error) {
 
 func stringsToIfaces(xs []string) []interface{} {
 	var args []interface{}
-
 	for _, v := range xs {
 		args = append(args, v)
 	}
