@@ -18,7 +18,7 @@ func cleanUpSubscribe(c *Client) {
   c.reqQuitToSub = false
   c.reqSuspendToSub = false
   c.subActive = false
-
+  c.subCount = 0
   c.chnl <- END
   close(c.chnl)
 }
@@ -45,9 +45,13 @@ func handleSubscribe(c *Client, f func (message string, err error)()) {
   }
 }
 
-
-func (c *Client) subscribeSingleChannel(f func (message string, err error)(), channel string)(int, error) {
-  val, err := c.sendRequest("SUBSCRIBE", channel)
+func (c *Client) Subscribe(f func (message string, err error)(), channels ...string) (int, error){
+  n := len(channels)
+  consolidatedRequest, err := createRequest("SUBSCRIBE", stringsToIfaces(channels))
+  if err != nil {
+    return 0, err
+  }
+  resp, err := c.sendRequestN(consolidatedRequest, n)
 	if err != nil {
 		return -1, err
 	}
@@ -57,34 +61,40 @@ func (c *Client) subscribeSingleChannel(f func (message string, err error)(), ch
     <-c.chnl
     c.chnl <- START
   }
-  _, _, i, _, err := parsePubSubResp(val)
+  pubsubResp := resp[len(resp) - 1]
+  _, _, i, _, err := parsePubSubResp(pubsubResp)
+  c.subCount = i
 	return i, err
-}
-
-func (c *Client) Subscribe(f func (message string, err error)(), channels ...string) (int, error){
-  var val int;
-  var err error;
-  for _, channel := range channels {
-    val, err = c.subscribeSingleChannel(f, channel)
-  }
-  return val, err
 }
 
 
 func (c *Client) UnSubscribe(channels ...string)(int, error) {
-  val, err := c.sendRequest("UNSUBSCRIBE", stringsToIfaces(channels))
+  n := len(channels)
+  if n == 0 {
+    n = c.subCount
+  }
+  consolidatedRequest, err := createRequest("UNSUBSCRIBE", stringsToIfaces(channels))
+  if err != nil {
+    return 0, err
+  }
+  resp, err := c.sendRequestN(consolidatedRequest, n)
 	if err != nil {
 		return -1, err
 	}
-	i, err := ifaceToInteger(val)
-
-  //if (err != 0 && i )
-
-  // Wait for subsribe go routine to shutdown
-  <-c.chnl
-
+  pubsubResp := resp[len(resp) - 1]
+  _, _, i, _, err := parsePubSubResp(pubsubResp)
+  c.chnl <- START
+  if err != nil {
+    return 0, err
+  }
+  if i == 0 {
+    c.reqQuitToSub = true
+    // Wait for subsribe go routine to send END
+    <-c.chnl
+  }
 	return i, err
 }
+
 
 
 func (c *Client) Publish(channel string, message string)(int, error) {

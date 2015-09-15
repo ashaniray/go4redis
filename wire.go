@@ -15,6 +15,7 @@ type Client struct {
 	chnl chan int
 	subActive bool
 	reqSuspendToSub bool
+	subCount int
 	reqQuitToSub bool
 }
 
@@ -185,25 +186,50 @@ func sendRequestDone(c *Client) {
 }
 
 func (c *Client) sendRequest(cmd string, args ...interface{}) (interface{}, error) {
+	c.prepareRequest()
+	request, err := createRequest(cmd, args...)
+	if err != nil {
+		return nil, err
+	}
+	fmt.Fprintf(c.conn, request)
+	return c.readResp2()
+}
+
+func (c *Client) prepareRequest() () {
 	if c.subActive {
 		c.chnl<-REQUEST_ACCESS
 		<-c.chnl
 		defer sendRequestDone(c)
 	}
-	request := cmd
+}
 
+func (c *Client) sendRequestN(consolidatedRequest string, n int) ([]interface{}, error) {
+	c.prepareRequest()
+	fmt.Fprintf(c.conn, consolidatedRequest)
+	resp := []interface{}{}
+	for i := 0; i < n; i++ {
+		val, err := c.readResp2()
+		if err != nil {
+			return resp, err
+		} else {
+			resp = append(resp, val)
+		}
+	}
+	return resp, nil
+}
+
+
+func createRequest(cmd string, args ...interface{}) (string, error) {
+	request := cmd
 	for _, arg := range args {
 		val, err := ifaceToStringFmt(arg)
 		if err != nil {
-			return nil, err
+			return EMPTY_STRING, err
 		}
 		request = request + " " + val
-
 	}
 	request = request + NEWLINE
-	fmt.Fprintf(c.conn, request)
-	return c.readResp2()
-
+	return request, nil
 }
 
 func BulkString(args ...string) string {
