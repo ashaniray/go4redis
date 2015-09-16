@@ -103,3 +103,12 @@ func (c *Client) Publish(channel string, message string)(int, error) {
 	i, err := ifaceToInteger(val)
 	return i, err
 }
+
+func (c *Client) Channels(pattern string)([]string, error) {
+  val, err := c.sendRequest("PUBSUB CHANNELS", pattern)
+	if err != nil {
+		return nil, err
+	}
+  channels, err := ifaceToStrings(val)
+	return channels, err
+}

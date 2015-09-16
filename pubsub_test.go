@@ -30,10 +30,16 @@ func publish(t *testing.T, channel chan int) {
 		t.Errorf("Expected no error while dialing and flushing but got %s", err)
 	}
 
+	channels, err := c.Channels("")
+	if len(channels) < 2 {
+		t.Errorf("Expected at least 2 channels in call to Channels but got %d", len(channels))
+	}
+
 	val, err := c.Publish(CHANNEL, MESSAGE)
 	if val != 1 {
 		t.Errorf("Expected 1 recevier for Publish but got %d", val)
 	}
+
 	channel <- 0
 }
 
