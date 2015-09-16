@@ -5,14 +5,36 @@ import (
   "fmt"
 )
 
+const (
+	CHANNEL = "chan1"
+	MESSAGE = "Message"
+	ERR_NOT_ALLOWED = "ERR only (P)SUBSCRIBE / (P)UNSUBSCRIBE / QUIT allowed in this context"
+)
+
+var callbackCalled bool = false
+
 func callBack(msg string, channel string, err error) {
-	fmt.Println("Callback is Called!!!!")
 	if (err == nil) {
-		fmt.Println("Message for channel", channel, "received:", msg)
+		if (msg == MESSAGE && channel == CHANNEL) {
+			callbackCalled = true
+		}
 	} else {
 		fmt.Println("ERROR!!!: ", err)
 	}
+}
 
+func publish(t *testing.T, channel chan int) {
+	c, err := DialAndFlush()
+
+	if err != nil {
+		t.Errorf("Expected no error while dialing and flushing but got %s", err)
+	}
+
+	val, err := c.Publish(CHANNEL, MESSAGE)
+	if val != 1 {
+		t.Errorf("Expected 1 recevier for Publish but got %d", val)
+	}
+	channel <- 0
 }
 
 func TestSubscribe(t *testing.T) {
@@ -22,7 +44,7 @@ func TestSubscribe(t *testing.T) {
 		t.Errorf("Expected no error while dialing and flushing but got %s", err)
 	}
 
-	l, err := c.Subscribe(callBack, "chan1", "chan2")
+	l, err := c.Subscribe(callBack, CHANNEL, "chan2")
 
 	if err != nil {
 		t.Errorf("expected no error while subscribe command, but got %s", err)
@@ -34,12 +56,12 @@ func TestSubscribe(t *testing.T) {
 
 	l, err = c.lpush("qqqq", 0)
 
-	const (
-		ERR_NOT_ALLOWED = "ERR only (P)SUBSCRIBE / (P)UNSUBSCRIBE / QUIT allowed in this context"
-	)
 	if err.Error() != ERR_NOT_ALLOWED  {
 		t.Errorf("Expected error " + ERR_NOT_ALLOWED + " but got " + err.Error())
 	}
+	channel := make(chan int)
+	go publish(t, channel)
+	<-channel
 
   l, err = c.UnSubscribe()
 
@@ -51,5 +73,7 @@ func TestSubscribe(t *testing.T) {
     t.Errorf("In call to Unsubscribe expected 0 but got %d", l)
   }
 
-
+	if callbackCalled == false {
+		t.Errorf("Callback not called for publish")
+	}
 }
