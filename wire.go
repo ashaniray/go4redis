@@ -8,6 +8,7 @@ import (
 	"net"
 	"strconv"
 	"strings"
+	"time"
 )
 
 type Client struct {
@@ -187,24 +188,31 @@ func sendRequestDone(c *Client) {
 
 func (c *Client) sendRequest(cmd string, args ...interface{}) (interface{}, error) {
 	c.prepareRequest()
+	if c.subActive == true {
+		defer sendRequestDone(c)
+	}
 	request, err := createRequest(cmd, args...)
 	if err != nil {
 		return nil, err
 	}
 	fmt.Fprintf(c.conn, request)
-	return c.readResp2()
+	val, err := c.readResp2()
+	return val, err
 }
 
 func (c *Client) prepareRequest() () {
-	if c.subActive {
-		c.chnl<-REQUEST_ACCESS
+	if c.subActive == true {
+		c.reqSuspendToSub = true
 		<-c.chnl
-		defer sendRequestDone(c)
+		c.conn.SetReadDeadline(time.Now().Add(10*time.Second))
 	}
 }
 
 func (c *Client) sendRequestN(consolidatedRequest string, n int) ([]interface{}, error) {
 	c.prepareRequest()
+	if c.subActive == true {
+		defer sendRequestDone(c)
+	}
 	fmt.Fprintf(c.conn, consolidatedRequest)
 	resp := []interface{}{}
 	for i := 0; i < n; i++ {
@@ -215,7 +223,6 @@ func (c *Client) sendRequestN(consolidatedRequest string, n int) ([]interface{},
 			resp = append(resp, val)
 		}
 	}
-
 	return resp, nil
 }
 

@@ -2,7 +2,6 @@ package go4redis
 
 import (
   "time"
-  "bufio"
   )
 
 const (
@@ -23,20 +22,22 @@ func cleanUpSubscribe(c *Client) {
   close(c.chnl)
 }
 
-func handleSubscribe(c *Client, f func (message string, err error)()) {
-  defer close(c.chnl)
+func handleSubscribe(c *Client, f func (message string, channel string, err error)()) {
+  //defer close(c.chnl)
+  defer cleanUpSubscribe(c)
   c.subActive = true
   c.chnl <- READY_TO_START
   <-c.chnl
-  r := bufio.NewReader(c.conn)
+  r := c.reader
   for ;c.reqQuitToSub != true; {
     c.conn.SetReadDeadline(time.Now().Add(time.Second))
     //Read till timeout
     val, err := readType(r)
-    if err != nil {
-      _, _, _, msg, err := parsePubSubResp(val)
-      go f(msg, err)
+    if err == nil {
+      _, channel, _, msg, err := parsePubSubResp(val)
+      go f(msg, channel, err)
     }
+
     if (c.reqSuspendToSub == true) {
       c.reqSuspendToSub = false
       c.chnl <- READY_TO_START
@@ -45,7 +46,7 @@ func handleSubscribe(c *Client, f func (message string, err error)()) {
   }
 }
 
-func (c *Client) Subscribe(f func (message string, err error)(), channels ...string) (int, error){
+func (c *Client) Subscribe(f func (message string, channel string, err error)(), channels ...string) (int, error){
   n := len(channels)
   consolidatedRequest, err := createRequest("SUBSCRIBE", stringsToIfaces(channels)...)
   if err != nil {
@@ -78,12 +79,11 @@ func (c *Client) UnSubscribe(channels ...string)(int, error) {
     return 0, err
   }
   resp, err := c.sendRequestN(consolidatedRequest, n)
-	if err != nil {
+  if err != nil {
 		return -1, err
 	}
   pubsubResp := resp[len(resp) - 1]
   _, _, i, _, err := parsePubSubResp(pubsubResp)
-  c.chnl <- START
   if err != nil {
     return 0, err
   }
@@ -92,7 +92,7 @@ func (c *Client) UnSubscribe(channels ...string)(int, error) {
     // Wait for subsribe go routine to send END
     <-c.chnl
   }
-	return i, err
+  return i, err
 }
 
 func (c *Client) Publish(channel string, message string)(int, error) {

@@ -5,7 +5,6 @@ import (
 	"strconv"
   "container/list"
 	"strings"
-
 )
 
 
@@ -26,12 +25,11 @@ func ifaceToStringFmt(anything interface{}) (string, error) {
 func ifaceToInteger(iface interface{}) (int, error) {
 	val, ok := iface.(int)
 	if ok == false {
-		valString, okString := iface.(string)
+		valString, okString := iface.(SimpleString)
 		if okString == false {
-
 			return 0, errors.New("Cannot convert to integer")
 		} else {
-			return 0, errors.New(valString)
+			return 0, errors.New(valString.value)
 		}
 	} else {
 		return val, nil
