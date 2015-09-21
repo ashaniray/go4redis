@@ -1,12 +1,11 @@
 package go4redis
 
 import (
+	"container/list"
 	"errors"
 	"strconv"
-  "container/list"
 	"strings"
 )
-
 
 func ifaceToStringFmt(anything interface{}) (string, error) {
 	switch anything.(type) {
@@ -44,7 +43,7 @@ func ifaceToString(iface interface{}) (string, error) {
 		if ok == false {
 			return EMPTY_STRING, errors.New("Cannot convert from type simple string")
 		} else {
-			if (val.success == false) {
+			if val.success == false {
 				return EMPTY_STRING, errors.New(val.value)
 			} else {
 				return val.value, nil
@@ -60,31 +59,30 @@ func ifaceToString(iface interface{}) (string, error) {
 		return EMPTY_STRING, errors.New("Attempt to convert unknown type to string")
 	}
 
-
 }
 
 func ifaceToStrings(iface interface{}) ([]string, error) {
-  l, ok := iface.(*list.List)
+	l, ok := iface.(*list.List)
 	if ok == false {
 		return []string{}, errors.New("Cannot convert response to array of string")
 	}
-  var args []string
-  for e := l.Front(); e != nil; e = e.Next() {
-    str, err := ifaceToString(e.Value)
-    if err != nil {
-      return nil, err
-    }
-    args = append(args, str)
-  }
-  return args, nil
+	var args []string
+	for e := l.Front(); e != nil; e = e.Next() {
+		str, err := ifaceToString(e.Value)
+		if err != nil {
+			return nil, err
+		}
+		args = append(args, str)
+	}
+	return args, nil
 }
 
-func mapToIfaces(key_values map[string] string) []interface{} {
-  args := []interface{}{}
-  for key := range key_values {
-    args = append(args, key, key_values[key])
-  }
-  return args
+func mapToIfaces(key_values map[string]string) []interface{} {
+	args := []interface{}{}
+	for key := range key_values {
+		args = append(args, key, key_values[key])
+	}
+	return args
 }
 
 func stringify(str string) string {
@@ -101,7 +99,7 @@ func parsePubSubResp(resp interface{}) (string, string, int, string, error) {
 		return EMPTY_STRING, EMPTY_STRING, 0, EMPTY_STRING, errors.New("Cannot convert SUBSCRIBE response to array")
 	}
 
-  first := l.Front()
+	first := l.Front()
 	second := first.Next()
 	third := second.Next()
 
@@ -115,7 +113,7 @@ func parsePubSubResp(resp interface{}) (string, string, int, string, error) {
 		return EMPTY_STRING, EMPTY_STRING, 0, EMPTY_STRING, errors.New("Cannot convert response of PUB/SUB to channel name")
 	}
 
-	switch strings.ToUpper (command) {
+	switch strings.ToUpper(command) {
 	case "SUBSCRIBE", "UNSUBSCRIBE":
 		channelCount, ok := third.Value.(int)
 		if ok == false {
@@ -129,16 +127,16 @@ func parsePubSubResp(resp interface{}) (string, string, int, string, error) {
 		}
 		return command, channel, 0, message, nil
 	default:
-			return EMPTY_STRING, EMPTY_STRING, 0, EMPTY_STRING, errors.New("Unknown Response Type")
+		return EMPTY_STRING, EMPTY_STRING, 0, EMPTY_STRING, errors.New("Unknown Response Type")
 	}
 }
 
-func getErrorFromResp(resp interface{}) (error) {
+func getErrorFromResp(resp interface{}) error {
 	val, ok := resp.(SimpleString)
 	if ok == false {
 		return errors.New("Error converting response to string")
 	} else {
-		if (val.success == false) {
+		if val.success == false {
 			return errors.New(val.value)
 		} else {
 			return nil

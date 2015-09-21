@@ -30,31 +30,6 @@ func TestDEL(t *testing.T) {
 }
 
 func TestEXISTS(t *testing.T) {
-  c, err := DialAndFlush()
-
-  if err != nil {
-    t.Errorf("Expected no error while dialing and flushing but got %s", err)
-  }
-
-  _, err = c.lpush("foo", "1")
-
-  if err != nil {
-    t.Errorf("expected no error while lpush command, but got %s", err)
-  }
-
-  nexists, err := c.Exists("foo")
-
-  if err != nil {
-		t.Errorf("expected no error while exists command, but got %s", err)
-	}
-
-  if nexists != 1 {
-		t.Errorf("expected exists command to return 1, but got %d", nexists)
-	}
-
-}
-
-func TestKEYS(t *testing.T)      {
 	c, err := DialAndFlush()
 
 	if err != nil {
@@ -63,9 +38,34 @@ func TestKEYS(t *testing.T)      {
 
 	_, err = c.lpush("foo", "1")
 
-  if err != nil {
-    t.Errorf("expected no error while lpush command, but got %s", err)
-  }
+	if err != nil {
+		t.Errorf("expected no error while lpush command, but got %s", err)
+	}
+
+	nexists, err := c.Exists("foo")
+
+	if err != nil {
+		t.Errorf("expected no error while exists command, but got %s", err)
+	}
+
+	if nexists != 1 {
+		t.Errorf("expected exists command to return 1, but got %d", nexists)
+	}
+
+}
+
+func TestKEYS(t *testing.T) {
+	c, err := DialAndFlush()
+
+	if err != nil {
+		t.Errorf("Expected no error while dialing and flushing but got %s", err)
+	}
+
+	_, err = c.lpush("foo", "1")
+
+	if err != nil {
+		t.Errorf("expected no error while lpush command, but got %s", err)
+	}
 
 	keys, err := c.Keys("*")
 

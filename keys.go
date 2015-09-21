@@ -16,14 +16,14 @@ func (c *Client) Del(keys ...string) (int, error) {
 // The number of keys existing among the ones specified as arguments.
 // Keys mentioned multiple times and existing are counted multiple times.
 func (c *Client) Exists(keys ...string) (int, error) {
-  args := stringsToIfaces(keys)
-  val, err := c.sendRequest("DEL", args...)
+	args := stringsToIfaces(keys)
+	val, err := c.sendRequest("DEL", args...)
 
-  if err != nil {
-    return -1, err
-  }
-  i, err := ifaceToInteger(val)
-  return i, err
+	if err != nil {
+		return -1, err
+	}
+	i, err := ifaceToInteger(val)
+	return i, err
 }
 
 func (c *Client) Keys(pattern string) ([]string, error) {

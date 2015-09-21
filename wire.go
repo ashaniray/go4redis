@@ -12,13 +12,13 @@ import (
 )
 
 type Client struct {
-	conn net.Conn
-	reader *bufio.Reader
-	chnl chan int
-	subActive bool
+	conn            net.Conn
+	reader          *bufio.Reader
+	chnl            chan int
+	subActive       bool
 	reqSuspendToSub bool
-	subCount int
-	reqQuitToSub bool
+	subCount        int
+	reqQuitToSub    bool
 }
 
 type SimpleString struct {
@@ -41,7 +41,6 @@ func Dial(addr string) (*Client, error) {
 	reader := bufio.NewReader(conn)
 	return &Client{conn: conn, reader: reader}, nil
 }
-
 
 func ReadLine(r *bufio.Reader) (string, error) {
 	line, err := r.ReadString('\n')
@@ -163,7 +162,7 @@ func (c *Client) readResp2() (interface{}, error) {
 func (c *Client) readResp() (string, error) {
 	r := c.reader
 	respType, _ := r.ReadByte()
- 	switch string(respType) {
+	switch string(respType) {
 	case "+":
 		return ReadLine(r)
 	case "-":
@@ -200,11 +199,11 @@ func (c *Client) sendRequest(cmd string, args ...interface{}) (interface{}, erro
 	return val, err
 }
 
-func (c *Client) prepareRequest() () {
+func (c *Client) prepareRequest() {
 	if c.subActive == true {
 		c.reqSuspendToSub = true
 		<-c.chnl
-		c.conn.SetReadDeadline(time.Now().Add(10*time.Second))
+		c.conn.SetReadDeadline(time.Now().Add(10 * time.Second))
 	}
 }
 
@@ -225,7 +224,6 @@ func (c *Client) sendRequestN(consolidatedRequest string, n int) ([]interface{},
 	}
 	return resp, nil
 }
-
 
 func createRequest(cmd string, args ...interface{}) (string, error) {
 	request := cmd
