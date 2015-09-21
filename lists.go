@@ -1,9 +1,5 @@
 package go4redis
 
-import (
-	"fmt"
-	"strconv"
-)
 
 // LLEN key
 // Get the length of a list
@@ -44,16 +40,12 @@ func (c *Client) lpush(key string, values ...interface{}) (int, error) {
 // Get an element from a list by its index
 
 func (c *Client) lindex(key string, index int) (string, error) {
-	sc := BulkString("LINDEX", key, strconv.Itoa(index))
-	fmt.Fprintf(c.conn, sc)
-
-	r, err := c.readResp()
-
+	val, err := c.sendRequest("LINDEX", key, index)
 	if err != nil {
-		return "", err
+		return EMPTY_STRING, err
 	}
-
-	return r, nil
+	i, err := ifaceToString(val)
+	return i, err
 }
 
 // LINSERT key BEFORE|AFTER pivot value
@@ -63,16 +55,12 @@ func (c *Client) lindex(key string, index int) (string, error) {
 // Remove and get the first element in a list
 
 func (c *Client) lpop(key string) (string, error) {
-	sc := BulkString("LPOP", key)
-	fmt.Fprintf(c.conn, sc)
-
-	r, err := c.readResp()
-
+	val, err := c.sendRequest("LPOP", key)
 	if err != nil {
-		return "", err
+		return EMPTY_STRING, err
 	}
-
-	return r, nil
+	i, err := ifaceToString(val)
+	return i, err
 }
 
 // LPUSHX key value
@@ -104,16 +92,12 @@ func (c *Client) lset(key string, idx int, value string) error {
 // RPOP key
 // Remove and get the last element in a list
 func (c *Client) rpop(key string) (string, error) {
-	sc := BulkString("RPOP", key)
-	fmt.Fprintf(c.conn, sc)
-
-	r, err := c.readResp()
-
+	val, err := c.sendRequest("RPOP", key)
 	if err != nil {
-		return "", err
+		return EMPTY_STRING, err
 	}
-
-	return r, nil
+	i, err := ifaceToString(val)
+	return i, err
 }
 
 // RPOPLPUSH source destination
@@ -123,22 +107,17 @@ func (c *Client) rpop(key string) (string, error) {
 // Append one or multiple values to a list
 func (c *Client) rpush(key string, values ...string) (int, error) {
 
-	args := []string{"RPUSH", key}
+	args := append([]interface{}{}, key)
+	args = append(args, stringsToIfaces(values)...)
 
-	for _, value := range values {
-		args = append(args, value)
-	}
-
-	sc := BulkString(args...)
-	fmt.Fprintf(c.conn, sc)
-
-	r, err := c.readResp()
-
+	val, err := c.sendRequest("RPUSH", args...)
 	if err != nil {
-		return 0, err
+		return -1, err
 	}
 
-	return strconv.Atoi(r)
+	i, err := ifaceToInteger(val)
+	return i, err
+
 }
 
 // RPUSHX key value

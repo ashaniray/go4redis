@@ -159,6 +159,7 @@ func (c *Client) readResp2() (interface{}, error) {
 	return parseResp(c.reader)
 }
 
+/*
 func (c *Client) readResp() (string, error) {
 	r := c.reader
 	respType, _ := r.ReadByte()
@@ -180,6 +181,7 @@ func (c *Client) readResp() (string, error) {
 
 	}
 }
+*/
 
 func sendRequestDone(c *Client) {
 	c.chnl <- START
@@ -237,7 +239,7 @@ func createRequest(cmd string, args ...interface{}) (string, error) {
 	request = request + NEWLINE
 	return request, nil
 }
-
+/*
 func BulkString(args ...string) string {
 	result := fmt.Sprintf("*%d\r\n", len(args))
 	for _, arg := range args {
@@ -246,3 +248,4 @@ func BulkString(args ...string) string {
 
 	return result
 }
+*/
