@@ -164,11 +164,9 @@ func readType(r *bufio.Reader) (interface{}, error) {
 	}
 }
 
-func parseResp(r *bufio.Reader) (interface{}, error) {
-	return readType(r)
-}
-
 func closeConnection(c *Client) {
+	// TODO: Any clean up that needs to be done when
+	// reader stops reading
 }
 
 func sendSubMessage(c *Client, channel string, msg string) {
@@ -178,6 +176,8 @@ func sendSubMessage(c *Client, channel string, msg string) {
 func readConnection(c *Client) {
 	defer closeConnection(c)
 
+	// TODO: infinite loop till
+	// reader encounters error
 	//for readErr == nil {
 	// while reader is valid...
 	for {
