@@ -1,7 +1,6 @@
 package go4redis
 
 import (
-	"fmt"
 	"testing"
 )
 
@@ -13,14 +12,10 @@ const (
 
 var callbackCalled bool = false
 
-func callBack(msg string, channel string, err error) {
-	if err == nil {
-		if msg == MESSAGE && channel == CHANNEL {
-			callbackCalled = true
-		}
-	} else {
-		fmt.Println("ERROR!!!: ", err)
-	}
+func callBack(channel chan string, syncChannel chan int) {
+	<-channel
+	callbackCalled = true
+	syncChannel <- 0
 }
 
 func publish(t *testing.T, channel chan int) {
@@ -50,7 +45,10 @@ func TestSubscribe(t *testing.T) {
 		t.Errorf("Expected no error while dialing and flushing but got %s", err)
 	}
 
-	l, err := c.Subscribe(callBack, CHANNEL, "chan2")
+	l, err, callbackChannel := c.Subscribe(CHANNEL, "chan2")
+
+	syncChannel2 := make (chan int)
+	go callBack(callbackChannel, syncChannel2)
 
 	if err != nil {
 		t.Errorf("expected no error while subscribe command, but got %s", err)
@@ -59,15 +57,15 @@ func TestSubscribe(t *testing.T) {
 	if l != 2 {
 		t.Errorf("In call to Subscribe expected 2 but got %d", l)
 	}
-
 	l, err = c.lpush("qqqq", 0)
-
 	if err.Error() != ERR_NOT_ALLOWED {
 		t.Errorf("Expected error " + ERR_NOT_ALLOWED + " but got " + err.Error())
 	}
-	channel := make(chan int)
-	go publish(t, channel)
-	<-channel
+	syncChannel := make(chan int)
+	go publish(t, syncChannel)
+
+	<-syncChannel
+	<-syncChannel2
 
 	l, err = c.UnSubscribe()
 

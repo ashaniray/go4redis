@@ -1,8 +1,5 @@
 package go4redis
 
-import (
-	"time"
-)
 
 const (
 	READY_TO_START = 0 // Sub handler notifes that it is ready to start
@@ -13,59 +10,34 @@ const (
 )
 
 func cleanUpSubscribe(c *Client) {
-	//c.conn.SetReadDeadline(0)
-	c.reqQuitToSub = false
-	c.reqSuspendToSub = false
 	c.subActive = false
 	c.subCount = 0
-	c.chnl <- END
-	close(c.chnl)
 }
 
-func handleSubscribe(c *Client, f func(message string, channel string, err error)) {
-	//defer close(c.chnl)
-	defer cleanUpSubscribe(c)
-	c.subActive = true
-	c.chnl <- READY_TO_START
-	<-c.chnl
-	r := c.reader
-	for c.reqQuitToSub != true {
-		c.conn.SetReadDeadline(time.Now().Add(time.Second))
-		//Read till timeout
-		val, err := readType(r)
-		if err == nil {
-			_, channel, _, msg, err := parsePubSubResp(val)
-			go f(msg, channel, err)
-		}
 
-		if c.reqSuspendToSub == true {
-			c.reqSuspendToSub = false
-			c.chnl <- READY_TO_START
-			<-c.chnl
-		}
-	}
-}
-
-func (c *Client) Subscribe(f func(message string, channel string, err error), channels ...string) (int, error) {
+func (c *Client) Subscribe(channels ...string) (int, error, chan string) {
 	n := len(channels)
 	consolidatedRequest, err := createRequest("SUBSCRIBE", stringsToIfaces(channels)...)
 	if err != nil {
-		return 0, err
+		return -1, err, nil
 	}
 	resp, err := c.sendRequestN(consolidatedRequest, n)
 	if err != nil {
-		return -1, err
-	}
-	if c.subActive == false {
-		c.chnl = make(chan int)
-		go handleSubscribe(c, f)
-		<-c.chnl
-		c.chnl <- START
+		return -1, err, nil
 	}
 	pubsubResp := resp[len(resp)-1]
 	_, _, i, _, err := parsePubSubResp(pubsubResp)
-	c.subCount = i
-	return i, err
+	callbackChannel := make (chan string)
+
+	for _, channel := range channels {
+		c.chanMap[channel] = callbackChannel
+	}
+	c.subCount = 0
+	if i > 0 {
+		c.subActive = true
+		c.subCount = i
+	}
+	return i, err, callbackChannel
 }
 
 func (c *Client) UnSubscribe(channels ...string) (int, error) {
@@ -86,10 +58,11 @@ func (c *Client) UnSubscribe(channels ...string) (int, error) {
 	if err != nil {
 		return 0, err
 	}
-	if i == 0 {
-		c.reqQuitToSub = true
-		// Wait for subsribe go routine to send END
-		<-c.chnl
+
+	c.subCount = i
+	if i <= 0 {
+		c.subActive = false
+		c.subCount = 0
 	}
 	return i, err
 }

@@ -4,21 +4,25 @@ import (
 	"bufio"
 	"container/list"
 	"errors"
-	"fmt"
 	"net"
 	"strconv"
 	"strings"
-	"time"
+	"fmt"
 )
+
+type Response struct {
+	val interface{}
+	err error
+}
 
 type Client struct {
 	conn            net.Conn
 	reader          *bufio.Reader
-	chnl            chan int
-	subActive       bool
-	reqSuspendToSub bool
-	subCount        int
-	reqQuitToSub    bool
+
+	subCount        int //Active subsciptions. Needed to determine number of response in UnSubscribe etc
+	subActive       bool // Is Subscription Active ?
+	readChannel     chan *Response // Channel for communication between recvr and sender
+	chanMap map[string] chan string // Map of redis channel vs go channel to send back published messages
 }
 
 type SimpleString struct {
@@ -39,7 +43,16 @@ func Dial(addr string) (*Client, error) {
 	}
 
 	reader := bufio.NewReader(conn)
-	return &Client{conn: conn, reader: reader}, nil
+	readChannel := make (chan *Response)
+
+	c := &Client{
+				conn: conn,
+				reader: reader,
+				readChannel: readChannel,
+				chanMap : make(map[string] chan string),
+			}
+	go readConnection(c)
+	return c, nil
 }
 
 func ReadLine(r *bufio.Reader) (string, error) {
@@ -155,73 +168,76 @@ func parseResp(r *bufio.Reader) (interface{}, error) {
 	return readType(r)
 }
 
-func (c *Client) readResp2() (interface{}, error) {
-	return parseResp(c.reader)
+func closeConnection(c *Client) {
 }
 
-/*
-func (c *Client) readResp() (string, error) {
-	r := c.reader
-	respType, _ := r.ReadByte()
-	switch string(respType) {
-	case "+":
-		return ReadLine(r)
-	case "-":
-		return ReadLine(r)
-	case ":":
-		return ReadLine(r)
-	case "$":
-		_, err := ReadLine(r)
-		if err != nil {
-			return "", err
-		}
-		return ReadLine(r)
-	default:
-		return "", errors.New("Protocol error")
+func sendSubMessage(c *Client, channel string, msg string) {
+	c.chanMap[channel] <- msg
+}
 
+func readConnection(c *Client) {
+	defer closeConnection(c)
+
+	//for readErr == nil {
+	// while reader is valid...
+	for {
+		val, readErr := readType(c.reader)
+		if isSubMessage(val, c) {
+			// This is pub sub response...
+			// Assume no error....
+			// Dont know what to do with the message error..
+			_, channel, _, msg, _ := parsePubSubResp(val)
+			go sendSubMessage(c, channel, msg)
+		} else {
+			c.readChannel <- &Response{val: val, err: readErr}
+		}
 	}
 }
-*/
 
-func sendRequestDone(c *Client) {
-	c.chnl <- START
+func isSubMessage(resp interface{}, c *Client) bool {
+	if c.subActive == false {
+		return false
+	}
+
+	l, ok := resp.(*list.List)
+	if ok == false {
+		return false
+	}
+
+	if l.Len() != 3 {
+		return false
+	}
+
+	command, ok := l.Front().Value.(string)
+	if ok == false {
+		return false
+	}
+
+	if strings.ToUpper(command) == "MESSAGE" {
+		return true
+	}
+	return false
 }
 
 func (c *Client) sendRequest(cmd string, args ...interface{}) (interface{}, error) {
-	c.prepareRequest()
-	if c.subActive == true {
-		defer sendRequestDone(c)
-	}
 	request, err := createRequest(cmd, args...)
 	if err != nil {
 		return nil, err
 	}
 	fmt.Fprintf(c.conn, request)
-	val, err := c.readResp2()
-	return val, err
-}
-
-func (c *Client) prepareRequest() {
-	if c.subActive == true {
-		c.reqSuspendToSub = true
-		<-c.chnl
-		c.conn.SetReadDeadline(time.Now().Add(10 * time.Second))
-	}
+	s := <-c.readChannel
+	return s.val, s.err
 }
 
 func (c *Client) sendRequestN(consolidatedRequest string, n int) ([]interface{}, error) {
-	c.prepareRequest()
-	if c.subActive == true {
-		defer sendRequestDone(c)
-	}
 	fmt.Fprintf(c.conn, consolidatedRequest)
 	resp := []interface{}{}
 	for i := 0; i < n; i++ {
-		val, err := c.readResp2()
-		if err != nil {
-			return resp, err
+		s := <-c.readChannel
+		if s.err != nil {
+			return resp, s.err
 		} else {
-			resp = append(resp, val)
+			resp = append(resp, s.val)
 		}
 	}
 	return resp, nil
@@ -239,13 +255,3 @@ func createRequest(cmd string, args ...interface{}) (string, error) {
 	request = request + NEWLINE
 	return request, nil
 }
-/*
-func BulkString(args ...string) string {
-	result := fmt.Sprintf("*%d\r\n", len(args))
-	for _, arg := range args {
-		result += fmt.Sprintf("$%d\r\n%s\r\n", len(arg), arg)
-	}
-
-	return result
-}
-*/
