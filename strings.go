@@ -227,7 +227,7 @@ func (c *Client) SetNX(key string, value string) (int, error) {
 	return i, err
 }
 
-func (c *Client) SETEX(key string, seconds int, value string) (string, error) {
+func (c *Client) SetEX(key string, seconds int, value string) (string, error) {
 	val, err := c.sendRequest("SETEX", key, seconds, value)
 	if err != nil {
 		return EMPTY_STRING, err
