@@ -1,13 +1,13 @@
 package go4redis
 
 import (
-	"bufio"
 	"container/list"
 	"errors"
 	"net"
-	"strconv"
 	"strings"
 	"fmt"
+	"bytes"
+	"bufio"
 )
 
 type Response struct {
@@ -23,6 +23,10 @@ type Client struct {
 	subActive       bool // Is Subscription Active ?
 	readChannel     chan *Response // Channel for communication between recvr and sender
 	chanMap map[string] chan string // Map of redis channel vs go channel to send back published messages
+
+	pipelineMode	bool
+	pipelineChan  chan *Response // Used in pipeline mode
+	pipelineBuffer bytes.Buffer
 }
 
 type SimpleString struct {
@@ -64,105 +68,6 @@ func ReadLine(r *bufio.Reader) (string, error) {
 	return strings.Trim(line, NEWLINE), nil
 }
 
-func readArray(r *bufio.Reader) (interface{}, error) {
-	_, err := r.ReadByte()
-	if err != nil {
-		return EMPTY_STRING, err
-	}
-	countAsStr, err := ReadLine(r)
-	if err != nil {
-		return EMPTY_STRING, err
-	}
-
-	arrLen, err := strconv.Atoi(countAsStr)
-	if err != nil {
-		return EMPTY_STRING, err
-	}
-
-	l := list.New()
-	for i := 0; i < arrLen; i++ {
-		val, err := readType(r)
-		if err != nil {
-			return EMPTY_STRING, err
-		}
-		l.PushBack(val)
-	}
-	return l, nil
-}
-
-func readNumber(r *bufio.Reader) (interface{}, error) {
-	_, err := r.ReadByte()
-	if err != nil {
-		return EMPTY_STRING, err
-	}
-	value, err := ReadLine(r)
-	if err != nil {
-		return EMPTY_STRING, err
-	}
-	return strconv.Atoi(value)
-}
-
-func readSimpleString(r *bufio.Reader) (interface{}, error) {
-	c, err := r.ReadByte()
-	if err != nil {
-		return EMPTY_STRING, err
-	}
-	line, err := ReadLine(r)
-	if err != nil {
-		return EMPTY_STRING, err
-	}
-	success := true
-	if c == '-' {
-		success = false
-	}
-	return SimpleString{
-		value:   (strings.Trim(line, NEWLINE)),
-		success: success,
-	}, nil
-}
-
-func readBulkString(r *bufio.Reader) (interface{}, error) {
-	_, err := r.ReadByte()
-	if err != nil {
-		return EMPTY_STRING, err
-	}
-	countAsStr, err := ReadLine(r)
-	if err != nil {
-		return EMPTY_STRING, err
-	}
-	count, err := strconv.Atoi(countAsStr)
-	if err != nil {
-		return EMPTY_STRING, nil
-	}
-	line, err := ReadLine(r)
-	if err != nil {
-		return EMPTY_STRING, err
-	}
-
-	if len(line) != count {
-		return EMPTY_STRING, errors.New("Expected " + countAsStr + " characters in string and got " + line)
-	}
-	return line, nil
-}
-
-func readType(r *bufio.Reader) (interface{}, error) {
-	c, err := r.Peek(1)
-	if err != nil {
-		return EMPTY_STRING, err
-	}
-	switch c[0] {
-	case '+', '-':
-		return readSimpleString(r)
-	case ':':
-		return readNumber(r)
-	case '$':
-		return readBulkString(r)
-	case '*':
-		return readArray(r)
-	default:
-		return EMPTY_STRING, errors.New("Invalid first token in response")
-	}
-}
 
 func closeConnection(c *Client) {
 	// TODO: Any clean up that needs to be done when
@@ -189,7 +94,11 @@ func readConnection(c *Client) {
 			_, channel, _, msg, _ := parsePubSubResp(val)
 			go sendSubMessage(c, channel, msg)
 		} else {
-			c.readChannel <- &Response{val: val, err: readErr}
+			if c.pipelineMode == false {
+					c.readChannel <- &Response{val: val, err: readErr}
+			} else {
+				c.pipelineChan <- &Response{val: val, err: readErr}
+			}
 		}
 	}
 }
@@ -220,6 +129,10 @@ func isSubMessage(resp interface{}, c *Client) bool {
 }
 
 func (c *Client) sendRequest(cmd string, args ...interface{}) (interface{}, error) {
+	if c.pipelineMode == true {
+		return nil, errors.New("Cannot execute command in pipeline mode. Use AddToPipeline(string) method instead")
+	}
+
 	request, err := createRequest(cmd, args...)
 	if err != nil {
 		return nil, err
@@ -230,6 +143,9 @@ func (c *Client) sendRequest(cmd string, args ...interface{}) (interface{}, erro
 }
 
 func (c *Client) sendRequestN(consolidatedRequest string, n int) ([]interface{}, error) {
+	if c.pipelineMode == true {
+		return nil, errors.New("Cannot execute command in pipeline mode. Use AddToPipeline(string) method instead")
+	}
 	fmt.Fprintf(c.conn, consolidatedRequest)
 	resp := []interface{}{}
 	for i := 0; i < n; i++ {

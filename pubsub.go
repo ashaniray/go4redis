@@ -1,20 +1,6 @@
 package go4redis
 
 
-const (
-	READY_TO_START = 0 // Sub handler notifes that it is ready to start
-	START          = 1 // Ask the sub handler to start processing
-	REQUEST_ACCESS = 2 // Req sub handler to reqlinquish reading from connection
-	QUIT           = 3 // Ask the sub handler to quit (unsubscribe)
-	END            = 8 // Sub handler quits and sends notification...
-)
-
-func cleanUpSubscribe(c *Client) {
-	c.subActive = false
-	c.subCount = 0
-}
-
-
 func (c *Client) Subscribe(channels ...string) (int, error, chan string) {
 	n := len(channels)
 	consolidatedRequest, err := createRequest("SUBSCRIBE", stringsToIfaces(channels)...)
