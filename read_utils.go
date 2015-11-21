@@ -79,7 +79,7 @@ func readBulkString(r *bufio.Reader) (interface{}, error) {
 		return EMPTY_STRING, err
 	}
   if count == -1 {
-    return nil, nil
+    return countAsStr, nil
   }
 	line, err := ReadLine(r)
 	if err != nil {

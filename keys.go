@@ -17,7 +17,7 @@ func (c *Client) Del(keys ...string) (int, error) {
 // Keys mentioned multiple times and existing are counted multiple times.
 func (c *Client) Exists(keys ...string) (int, error) {
 	args := stringsToIfaces(keys)
-	val, err := c.sendRequest("DEL", args...)
+	val, err := c.sendRequest("EXISTS", args...)
 
 	if err != nil {
 		return -1, err
