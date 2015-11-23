@@ -1,12 +1,8 @@
 package go4redis
 
 func (c *Client) HDel(key string, fields ...string) (int, error) {
-	concatenated_field := ""
-
-	for _, arg := range fields {
-		concatenated_field = concatenated_field + " " + arg
-	}
-	val, err := c.sendRequest("HDEL", key, concatenated_field)
+	args := append([]string{key}, fields...)
+	val, err := c.sendRequest("HDEL", stringsToIfaces(args)...)
 	if err != nil {
 		return -1, err
 	}
@@ -23,7 +19,6 @@ func (c *Client) HExists(key string, field string ) (int, error) {
 	return i, err
 }
 
-//Need to take care of the return type as BulkStringReply
 func (c *Client) HGet(key string, field string ) (string, error) {
 	val, err := c.sendRequest("HGET", key, field)
   if err != nil {
@@ -52,7 +47,6 @@ func (c *Client) HIncrBy(key string, field string ,value int) (int, error) {
 	return i, err
 }
 
-//Need to take care of the return type as BulkStringReply
 func (c *Client) HIncrByFloat(key string, field string ,value string) (string, error) {
 	val, err := c.sendRequest("HINCRBYFLOAT", key,field, value)
 	if err != nil {
@@ -82,15 +76,8 @@ func (c *Client) HLen(key string )  (int, error) {
 }
 
 func (c *Client) HMGet(key string ,fields ...string)  ([]string, error) {
-	var args []string
-
-	concatenated_field := ""
-
-	for _, arg := range fields {
-		concatenated_field = concatenated_field + " " + arg
-	}
-	val, err := c.sendRequest("HMGET", key, concatenated_field)
-
+	args := append([]string{key}, fields...)
+	val, err := c.sendRequest("HMGET", stringsToIfaces(args)...)
   if err != nil {
 		return args, err
 	}
@@ -98,14 +85,9 @@ func (c *Client) HMGet(key string ,fields ...string)  ([]string, error) {
 	return args, err
 }
 
-func (c *Client) HMSet(key string ,field string, value string, fieldvalue ...string)  (string, error) {
-	concatenated_fieldvalue := field + " " + value
-
-	for _, arg := range fieldvalue {
-		concatenated_fieldvalue = concatenated_fieldvalue + " " + arg
-	}
-	val, err := c.sendRequest("HMSET", key, concatenated_fieldvalue)
-
+func (c *Client) HMSet(key string , fieldvalue ...string)  (string, error) {
+	args := append([]string{key}, fieldvalue...)
+	val, err := c.sendRequest("HMSET", stringsToIfaces(args)...)
 	if err != nil {
 		return EMPTY_STRING, err
 	}
